@@ -10,10 +10,11 @@
 )]
 
 use asr::{
+    deep_pointer::DeepPointer,
     future::{next_tick, retry},
     game_engine::unity::{
         get_scene_name,
-        il2cpp::{Image, Module, UnityPointer, Version},
+        il2cpp::{Module, Version},
         SceneManager,
     },
     time::Duration,
@@ -40,7 +41,7 @@ async fn main() {
                 let mut watchers = Watchers::default();
 
                 // Perform memory scanning to look for the addresses we need
-                let memory = retry(|| Memory::init(&process)).await;
+                let memory = Memory::init(&process).await;
 
                 loop {
                     // Splitting logic. Adapted from OG LiveSplit:
@@ -111,43 +112,87 @@ struct Watchers {
 }
 
 struct Memory {
-    il2cpp_module: Module,
-    game_assembly: Image,
     scene_manager: SceneManager,
-    is_loading: UnityPointer<1>,
-    current_scene_controller: UnityPointer<2>,
-    next_scene_name: UnityPointer<3>,
+    is_loading: DeepPointer<1>,
+    level_id: DeepPointer<4>,
+    next_scene_name: DeepPointer<3>,
+    is_result_sequence: DeepPointer<3>,
 }
 
 impl Memory {
-    fn init(game: &Process) -> Option<Self> {
-        let il2cpp_module = Module::attach(game, Version::V2020)?;
-        let game_assembly = il2cpp_module.get_default_image(game)?;
-        let scene_manager = SceneManager::attach(game)?;
+    async fn init(game: &Process) -> Self {
+        let il2cpp_module = Module::wait_attach(game, Version::V2020).await;
+        let game_assembly = il2cpp_module.wait_get_default_image(game).await;
+        let scene_manager = SceneManager::wait_attach(game).await;
+
+        let scene_manager_class = game_assembly.wait_get_class(game, &il2cpp_module, "Scene_Manager").await;
+        let scene_manager_static = scene_manager_class.wait_get_static_table(game, &il2cpp_module).await;
+        let scene_manager_is_in_transition = scene_manager_class.wait_get_field_offset(
+            game,
+            &il2cpp_module,
+            "<IsTransitionPlay>k__BackingField",
+        ).await as _;
+
+        let scene_manager_parent = scene_manager_class
+            .wait_get_parent(game, &il2cpp_module).await
+            .wait_get_parent(game, &il2cpp_module).await;
+        let scene_manager_parent_static =
+            scene_manager_parent.wait_get_static_table(game, &il2cpp_module).await;
+        let scene_manager_parent_instance =
+            scene_manager_parent.wait_get_field_offset(game, &il2cpp_module, "s_Instance").await as _;
+        let scene_manager_current_scene_controller = scene_manager_class.wait_get_field_offset(
+            game,
+            &il2cpp_module,
+            "<CurrentSceneController>k__BackingField",
+        ).await as _;
+        let scene_manager_next_scene_name = scene_manager_class.wait_get_field_offset(
+            game,
+            &il2cpp_module,
+            "<NextSceneName>k__BackingField",
+        ).await as _;
+
+        let game_scene_controller =
+            game_assembly.wait_get_class(game, &il2cpp_module, "GameSceneControllerBase").await;
+        let game_scene_controller_stage_info =
+            game_scene_controller.wait_get_field_offset(game, &il2cpp_module, "stageInfo").await as _;
+        let game_scene_controller_is_result_sequence =
+            game_scene_controller.wait_get_field_offset(game, &il2cpp_module, "isResultSequence").await as _;
 
         let is_loading =
-            UnityPointer::new("Scene_Manager", 0, &["<IsTransitionPlay>k__BackingField"]);
-
-        let current_scene_controller = UnityPointer::new(
-            "Scene_Manager",
-            2,
-            &["s_Instance", "<CurrentSceneController>k__BackingField"],
+            DeepPointer::new_64bit(scene_manager_static, &[scene_manager_is_in_transition]);
+        let level_id = DeepPointer::new_64bit(
+            scene_manager_parent_static,
+            &[
+                scene_manager_parent_instance,
+                scene_manager_current_scene_controller,
+                game_scene_controller_stage_info,
+                0x0,
+            ],
+        );
+        let is_result_sequence = DeepPointer::new_64bit(
+            scene_manager_parent_static,
+            &[
+                scene_manager_parent_instance,
+                scene_manager_current_scene_controller,
+                game_scene_controller_is_result_sequence,
+            ],
+        );
+        let next_scene_name = DeepPointer::new_64bit(
+            scene_manager_parent_static,
+            &[
+                scene_manager_parent_instance,
+                scene_manager_next_scene_name,
+                0x14,
+            ],
         );
 
-        let next_scene_name = UnityPointer::new(
-            "Scene_Manager",
-            2,
-            &["s_Instance", "<NextSceneName>k__BackingField"],
-        );
-
-        Some(Self {
-            il2cpp_module,
-            game_assembly,
+        Self {
             scene_manager,
             is_loading,
-            current_scene_controller,
+            level_id,
             next_scene_name,
-        })
+            is_result_sequence,
+        }
     }
 }
 
@@ -156,14 +201,9 @@ fn update_loop(game: &Process, addresses: &Memory, watchers: &mut Watchers) {
         if let Ok(scene_path) = addresses.scene_manager.get_current_scene_path::<128>(game) {
             let scene_name = get_scene_name(&scene_path);
             if scene_name == b"MainMenu" {
-                let next_scene = game
-                    .read_pointer_path64::<[u16; 10]>(
-                        addresses
-                            .next_scene_name
-                            .deref_offsets(game, &addresses.il2cpp_module, &addresses.game_assembly)
-                            .unwrap_or_default(),
-                        &[0, 0x14],
-                    )
+                let next_scene = addresses
+                    .next_scene_name
+                    .deref::<[u16; 10]>(game)
                     .unwrap_or_default()
                     .map(|val| val as u8);
                 &next_scene == b"MovieScene"
@@ -175,34 +215,17 @@ fn update_loop(game: &Process, addresses: &Memory, watchers: &mut Watchers) {
         },
     );
 
-    watchers.level_id.update_infallible(
-        game.read_pointer_path64(
-            addresses
-                .current_scene_controller
-                .deref_offsets(game, &addresses.il2cpp_module, &addresses.game_assembly)
-                .unwrap_or_default(),
-            &[0, 0x40, 0x10],
-        )
-        .unwrap_or_default(),
-    );
+    watchers
+        .level_id
+        .update_infallible(addresses.level_id.deref(game).unwrap_or_default());
 
-    watchers.is_loading.update_infallible(
-        addresses
-            .is_loading
-            .deref::<bool>(game, &addresses.il2cpp_module, &addresses.game_assembly)
-            .unwrap_or_default(),
-    );
+    watchers
+        .is_loading
+        .update_infallible(addresses.is_loading.deref(game).unwrap_or_default());
 
-    watchers.goal_ring_flag.update_infallible(
-        game.read_pointer_path64(
-            addresses
-                .current_scene_controller
-                .deref_offsets(game, &addresses.il2cpp_module, &addresses.game_assembly)
-                .unwrap_or_default(),
-            &[0, 0xF3],
-        )
-        .unwrap_or_default(),
-    );
+    watchers
+        .goal_ring_flag
+        .update_infallible(addresses.is_result_sequence.deref(game).unwrap_or_default());
 }
 
 fn start(watchers: &Watchers, settings: &Settings) -> bool {
