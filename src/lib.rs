@@ -11,7 +11,7 @@
 
 use asr::{
     future::{next_tick, retry},
-    game_engine::unity::il2cpp::{Module, Version, UnityPointer, Image},
+    game_engine::unity::{il2cpp::{Module, Version, UnityPointer, Image}, SceneManager, get_scene_name},
     time::Duration,
     timer::{self, TimerState},
     watcher::Watcher,
@@ -99,50 +99,52 @@ struct Settings {
 #[derive(Default)]
 struct Watchers {
     is_loading: Watcher<bool>,
-    level_id: Watcher<u32>,
-    level_id_unfiltered: Watcher<u32>,
-    tocman_qte: Watcher<bool>,
 }
 
 struct Memory {
     il2cpp_module: Module,
     game_assembly: Image,
-    is_loading: UnityPointer<2>,
-
+    scene_manager: SceneManager,
 }
 
 impl Memory {
     fn init(game: &Process) -> Option<Self> {
         let il2cpp_module = Module::attach(game, Version::V2020)?;
         let game_assembly = il2cpp_module.get_default_image(game)?;
-
-        let is_loading = UnityPointer::new("SceneManager", 1, &["s_sInstance", "m_bProcessing"]);
+        let scene_manager = SceneManager::attach(game)?;
+        
+        //let is_loading = UnityPointer::new("SceneManager", 1, &["s_sInstance", "m_bProcessing"]);
 
         Some(Self {
             il2cpp_module,
             game_assembly,
-            is_loading,
+            scene_manager,
         })
     }
 }
 
 fn update_loop(game: &Process, addresses: &Memory, watchers: &mut Watchers) {
-    
+    watchers.is_loading.update_infallible({
+        let scene_path = addresses.scene_manager.get_current_scene_path::<128>(game);
+
+        let scene_name = match &scene_path {
+            Ok(x) => Some(get_scene_name(x)),
+            _ => None,
+        };
+
+        match scene_name {
+            Some(b"ReleaseScene") | Some(b"GameMain") => true,
+            Some(_) => false,
+            None => match &watchers.is_loading.pair {
+                Some(x) => x.current,
+                _ => false,
+            }
+        }
+    });
 }
 
 fn start(watchers: &Watchers, settings: &Settings) -> bool {
-    if !settings.start {
-        return false;
-    }
-
-    watchers
-        .level_id_unfiltered
-        .pair
-        .is_some_and(|val| val.current == 4)
-        && watchers
-            .is_loading
-            .pair
-            .is_some_and(|val| val.changed_to(&true))
+    false
 }
 
 fn split(watchers: &Watchers, settings: &Settings) -> bool {
