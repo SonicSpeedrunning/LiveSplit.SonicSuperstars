@@ -93,26 +93,212 @@ async fn main() {
 #[derive(asr::user_settings::Settings)]
 struct Settings {
     #[default = true]
-    /// => Enable auto start
-    start: bool,
+    /// => AUTO START: Enable auto start (Story Mode)
+    start_story: bool,
     #[default = true]
-    /// Split after completion of each level
-    split: bool,
+    /// => AUTO START: Enable auto start (Trip's Story)
+    start_trip: bool,
+    #[default = true]
+    /// => AUTO START: Enable auto start (Last Story)
+    start_last_story: bool,
+    #[default = false]
+    /// ---------- STORY MODE ----------
+    _story: bool,
+    #[default = true]
+    /// Bridge Island Zone - Act 1
+    bridge_island_1: bool,
+    #[default = true]
+    /// Bridge Island Zone - Act 2
+    bridge_island_2: bool,
+    #[default = true]
+    /// Bridge Island Zone - Act Fruit
+    bridge_island_fruit: bool,
+    #[default = true]
+    /// Speed Jungle Zone - Act 1
+    speed_jungle_1: bool,
+    #[default = true]
+    /// Speed Jungle Zone - Act Sonic
+    speed_jungle_sonic: bool,
+    #[default = true]
+    /// Speed Jungle Zone - Act 2
+    speed_jungle_2: bool,
+    #[default = true]
+    /// Sky Temple Zone - Act 1
+    sky_temple_1: bool,
+    #[default = true]
+    /// Pinball Carnival Zone - Act 1
+    pinball_carnival_1: bool,
+    #[default = true]
+    /// Pinball Carnival Zone - Act 2
+    pinball_carnival_2: bool,
+    #[default = true]
+    /// Pinball Carnival Zone - Act Fruit
+    pinball_carnival_fruit: bool,
+    #[default = true]
+    /// Lagoon City Zone - Act 1
+    lagoon_city_1: bool,
+    #[default = true]
+    /// Lagoon City Zone - Act Amy
+    lagoon_city_amy: bool,
+    #[default = true]
+    /// Lagoon City Zone - Act 2
+    lagoon_city_2: bool,
+    #[default = true]
+    /// Sand Sanctuary Zone - Act 1
+    sand_sanctuary_1: bool,
+    #[default = true]
+    /// Press Factory Zone - Act 1
+    press_factory_1: bool,
+    #[default = true]
+    /// Press Factory Zone - Act 2
+    press_factory_2: bool,
+    #[default = true]
+    /// Press Factory Zone - Act Fruit
+    press_factory_fruit: bool,
+    #[default = true]
+    /// Golden Capital Zone - Act 1
+    golden_capital_1: bool,
+    #[default = true]
+    /// Golden Capital Zone - Act Knuckles
+    golden_capital_knuckles: bool,
+    #[default = true]
+    /// Golden Capital Zone - Act 2
+    golden_capital_2: bool,
+    #[default = true]
+    /// Cyber Station Zone - Act 1
+    cyber_station_1: bool,
+    #[default = true]
+    /// Frozen Base Zone - Act 1
+    frozen_base_1: bool,
+    #[default = true]
+    /// Frozen Base Zone - Act Tails
+    frozen_base_tails: bool,
+    #[default = true]
+    /// Frozen Base Zone - Act 2
+    frozen_base_2: bool,
+    #[default = true]
+    /// Egg Fortress Zone - Act 1
+    egg_fortress_1: bool,
+    #[default = true]
+    /// Egg Fortress Zone - Act 2
+    egg_fortress_2: bool,
+    #[default = false]
+    /// ---------- TRIP'S STORY ----------
+    _trip: bool,
+    #[default = true]
+    /// Bridge Island Zone - Act 1
+    trip_bridge_island_1: bool,
+    #[default = true]
+    /// Bridge Island Zone - Act 2
+    trip_bridge_island_2: bool,
+    #[default = true]
+    /// Bridge Island Zone - Act Fruit
+    trip_bridge_island_fruit: bool,
+    #[default = true]
+    /// Speed Jungle Zone - Act 1
+    trip_speed_jungle_1: bool,
+    #[default = true]
+    /// Speed Jungle Zone - Act 2
+    trip_speed_jungle_2: bool,
+    #[default = true]
+    /// Speed Jungle Zone - Act 3
+    trip_speed_jungle_3: bool,
+    #[default = true]
+    /// Sky Temple Zone - Act 1
+    trip_sky_temple_1: bool,
+    #[default = true]
+    /// Pinball Carnival Zone - Act 1
+    trip_pinball_carnival_1: bool,
+    #[default = true]
+    /// Pinball Carnival Zone - Act 2
+    trip_pinball_carnival_2: bool,
+    #[default = true]
+    /// Pinball Carnival Zone - Act Fruit
+    trip_pinball_carnival_fruit: bool,
+    #[default = true]
+    /// Lagoon City Zone - Act 1
+    trip_lagoon_city_1: bool,
+    #[default = true]
+    /// Lagoon City Zone - Act 2
+    trip_lagoon_city_2: bool,
+    #[default = true]
+    /// Lagoon City Zone - Act 3
+    trip_lagoon_city_3: bool,
+    #[default = true]
+    /// Sand Sanctuary Zone - Act 1
+    trip_sand_sanctuary_1: bool,
+    #[default = true]
+    /// Press Factory Zone - Act 1
+    trip_press_factory_1: bool,
+    #[default = true]
+    /// Press Factory Zone - Act 2
+    trip_press_factory_2: bool,
+    #[default = true]
+    /// Press Factory Zone - Act Fruit
+    trip_press_factory_fruit: bool,
+    #[default = true]
+    /// Golden Capital Zone - Act 1
+    trip_golden_capital_1: bool,
+    #[default = true]
+    /// Golden Capital Zone - Act 2
+    trip_golden_capital_2: bool,
+    #[default = true]
+    /// Golden Capital Zone - Act 3
+    trip_golden_capital_3: bool,
+    #[default = true]
+    /// Cyber Station Zone - Act 1
+    trip_cyber_station_1: bool,
+    #[default = true]
+    /// Frozen Base Zone - Act 1
+    trip_frozen_base_1: bool,
+    #[default = true]
+    /// Frozen Base Zone - Act 2
+    trip_frozen_base_2: bool,
+    #[default = true]
+    /// Frozen Base Zone - Act 3
+    trip_frozen_base_3: bool,
+    #[default = true]
+    /// Egg Fortress Zone - Act 1
+    trip_egg_fortress_1: bool,
+    #[default = true]
+    /// Egg Fortress Zone - Act 2
+    trip_egg_fortress_2: bool,
+    #[default = false]
+    /// ---------- FINAL STORY ----------
+    _final_story: bool,
+    #[default = true]
+    /// Defeat the black dragon
+    black_dragon: bool,
 }
 
 #[derive(Default)]
 struct Watchers {
     start_trigger: Watcher<bool>,
+    start_trigger_trip: Watcher<bool>,
+    game_mode: Watcher<u32>,
     level_id: Watcher<u32>,
     is_loading: Watcher<bool>,
     goal_ring_flag: Watcher<bool>,
+    black_dragon_defeated: Watcher<bool>,
 }
 
 struct Memory {
     is_loading: DeepPointer<1>,
-    next_scene_name: DeepPointer<3>,
+    game_mode: DeepPointer<2>,
+    save_data: SysSaveDataStory,
     current_scene_controller: DeepPointer<2>,
     game_scene_controller_offsets: GameSceneControllerOffsets,
+    black_dragon_controller_offsets: BlackDragonBattleSceneControllerOffsets,
+}
+
+struct SysSaveDataStory {
+    static_table: Address,
+    instance: u64,
+    sys_save_data: u64,
+    save_datas: u64,
+    current_slot: u64,
+    is_normal_first_play: u64,
+    is_trip_first_play: u64,
 }
 
 struct GameSceneControllerOffsets {
@@ -122,10 +308,35 @@ struct GameSceneControllerOffsets {
     is_time_attack_mode: u32,
 }
 
+struct BlackDragonBattleSceneControllerOffsets {
+    seq: u64,
+}
+
 impl Memory {
     async fn init(game: &Process) -> Self {
         let il2cpp_module = Module::wait_attach(game, Version::V2020).await;
         let game_assembly = il2cpp_module.wait_get_default_image(game).await;
+
+        let game_mode = {
+            let sys_game_manager = game_assembly
+                .wait_get_class(game, &il2cpp_module, "SysGameManager")
+                .await;
+            let sys_game_manager_parent = sys_game_manager
+                .wait_get_parent(game, &il2cpp_module)
+                .await
+                .wait_get_parent(game, &il2cpp_module)
+                .await;
+            let game_mode = sys_game_manager
+                .wait_get_field_offset(game, &il2cpp_module, "gameMode")
+                .await as _;
+            let static_table = sys_game_manager_parent
+                .wait_get_static_table(game, &il2cpp_module)
+                .await;
+            let instance = sys_game_manager_parent
+                .wait_get_field_offset(game, &il2cpp_module, "s_Instance")
+                .await as _;
+            DeepPointer::new_64bit(static_table, &[instance, game_mode])
+        };
 
         let scene_manager_class = game_assembly
             .wait_get_class(game, &il2cpp_module, "Scene_Manager")
@@ -140,78 +351,130 @@ impl Memory {
         let is_loading =
             DeepPointer::new_64bit(scene_manager_static, &[scene_manager_is_in_transition]);
 
-        let scene_manager_parent = scene_manager_class
-            .wait_get_parent(game, &il2cpp_module)
-            .await
-            .wait_get_parent(game, &il2cpp_module)
-            .await;
-        let scene_manager_parent_static = scene_manager_parent
-            .wait_get_static_table(game, &il2cpp_module)
-            .await;
-        let scene_manager_parent_instance = scene_manager_parent
-            .wait_get_field_offset(game, &il2cpp_module, "s_Instance")
-            .await as _;
-        let scene_manager_current_scene_controller = scene_manager_class
-            .wait_get_field_offset(
-                game,
-                &il2cpp_module,
-                "<CurrentSceneController>k__BackingField",
+        let current_scene_controller = {
+            let scene_manager_parent = scene_manager_class
+                .wait_get_parent(game, &il2cpp_module)
+                .await
+                .wait_get_parent(game, &il2cpp_module)
+                .await;
+            let scene_manager_parent_static = scene_manager_parent
+                .wait_get_static_table(game, &il2cpp_module)
+                .await;
+            let scene_manager_parent_instance = scene_manager_parent
+                .wait_get_field_offset(game, &il2cpp_module, "s_Instance")
+                .await as _;
+            let scene_manager_current_scene_controller = scene_manager_class
+                .wait_get_field_offset(
+                    game,
+                    &il2cpp_module,
+                    "<CurrentSceneController>k__BackingField",
+                )
+                .await as _;
+
+            DeepPointer::new_64bit(
+                scene_manager_parent_static,
+                &[
+                    scene_manager_parent_instance,
+                    scene_manager_current_scene_controller,
+                ],
             )
-            .await as _;
+        };
 
-        let current_scene_controller = DeepPointer::new_64bit(
-            scene_manager_parent_static,
-            &[
-                scene_manager_parent_instance,
-                scene_manager_current_scene_controller,
-            ],
-        );
+        let save_data = {
+            let sys_save_manager = game_assembly
+                .wait_get_class(game, &il2cpp_module, "SysSaveManager")
+                .await;
+            let sys_save_manager_parent = sys_save_manager
+                .wait_get_parent(game, &il2cpp_module)
+                .await
+                .wait_get_parent(game, &il2cpp_module)
+                .await;
+            let sys_save_manager_instance = sys_save_manager_parent
+                .wait_get_static_table(game, &il2cpp_module)
+                .await;
+            let instance = sys_save_manager_parent
+                .wait_get_field_offset(game, &il2cpp_module, "s_Instance")
+                .await as _;
+            let save_data = sys_save_manager
+                .wait_get_field_offset(game, &il2cpp_module, "sysSaveData")
+                .await as _;
+            let current_slot = sys_save_manager
+                .wait_get_field_offset(game, &il2cpp_module, "<CurrentSlotNo>k__BackingField")
+                .await as _;
+            let save_datas = game_assembly
+                .wait_get_class(game, &il2cpp_module, "SysSaveData")
+                .await
+                .wait_get_field_offset(game, &il2cpp_module, "SaveDatas")
+                .await as _;
 
-        let scene_manager_next_scene_name = scene_manager_class
-            .wait_get_field_offset(game, &il2cpp_module, "<NextSceneName>k__BackingField")
-            .await as _;
+            let sys_save_data_story = game_assembly
+                .wait_get_class(game, &il2cpp_module, "SysSaveDataStory")
+                .await;
+            let is_normal_first_play = sys_save_data_story
+                .wait_get_field_offset(game, &il2cpp_module, "IsNormalFirstPlay")
+                .await as _;
+            let is_trip_first_play = sys_save_data_story
+                .wait_get_field_offset(game, &il2cpp_module, "IsTripFirstPlay")
+                .await as _;
 
-        let next_scene_name = DeepPointer::new_64bit(
-            scene_manager_parent_static,
-            &[
-                scene_manager_parent_instance,
-                scene_manager_next_scene_name,
-                0x14,
-            ],
-        );
+            SysSaveDataStory {
+                static_table: sys_save_manager_instance,
+                instance,
+                sys_save_data: save_data,
+                save_datas,
+                current_slot,
+                is_normal_first_play,
+                is_trip_first_play,
+            }
+        };
 
-        let game_scene_controller = game_assembly
-            .wait_get_class(game, &il2cpp_module, "GameSceneControllerBase")
-            .await;
-        let game_scene_controller_stage_info = game_scene_controller
-            .wait_get_field_offset(game, &il2cpp_module, "stageInfo")
-            .await as _;
-        let game_scene_controller_is_goal_sequence = game_scene_controller
-            .wait_get_field_offset(game, &il2cpp_module, "isGoalSequence")
-            .await as _;
-        let game_scene_controller_is_result_sequence = game_scene_controller
-            .wait_get_field_offset(game, &il2cpp_module, "isResultSequence")
-            .await as _;
+        let game_scene_controller_offsets = {
+            let game_scene_controller = game_assembly
+                .wait_get_class(game, &il2cpp_module, "GameSceneControllerBase")
+                .await;
+            let game_scene_controller_stage_info = game_scene_controller
+                .wait_get_field_offset(game, &il2cpp_module, "stageInfo")
+                .await as _;
+            let game_scene_controller_is_goal_sequence = game_scene_controller
+                .wait_get_field_offset(game, &il2cpp_module, "isGoalSequence")
+                .await as _;
+            let game_scene_controller_is_result_sequence = game_scene_controller
+                .wait_get_field_offset(game, &il2cpp_module, "isResultSequence")
+                .await as _;
 
-        let game_scene_controller = game_assembly
-            .wait_get_class(game, &il2cpp_module, "GameSceneController")
-            .await;
-        let game_scene_controller_is_time_attack_mode = game_scene_controller
-            .wait_get_field_offset(game, &il2cpp_module, "isTimeAttackMode")
-            .await as _;
+            let game_scene_controller = game_assembly
+                .wait_get_class(game, &il2cpp_module, "GameSceneController")
+                .await;
+            let game_scene_controller_is_time_attack_mode = game_scene_controller
+                .wait_get_field_offset(game, &il2cpp_module, "isTimeAttackMode")
+                .await as _;
 
-        let game_scene_controller_offsets = GameSceneControllerOffsets {
-            stage_info: game_scene_controller_stage_info,
-            is_goal_sequence: game_scene_controller_is_goal_sequence,
-            is_result_sequence: game_scene_controller_is_result_sequence,
-            is_time_attack_mode: game_scene_controller_is_time_attack_mode,
+            GameSceneControllerOffsets {
+                stage_info: game_scene_controller_stage_info,
+                is_goal_sequence: game_scene_controller_is_goal_sequence,
+                is_result_sequence: game_scene_controller_is_result_sequence,
+                is_time_attack_mode: game_scene_controller_is_time_attack_mode,
+            }
+        };
+
+        let boss_black_dragon = {
+            let black_dragon_scene = game_assembly
+                .wait_get_class(game, &il2cpp_module, "BlackDragonBattleGameSceneController")
+                .await;
+            let seq = black_dragon_scene
+                .wait_get_field_offset(game, &il2cpp_module, "seq")
+                .await as _;
+
+            BlackDragonBattleSceneControllerOffsets { seq }
         };
 
         Self {
             is_loading,
-            next_scene_name,
+            game_mode,
+            save_data,
             current_scene_controller,
             game_scene_controller_offsets,
+            black_dragon_controller_offsets: boss_black_dragon,
         }
     }
 
@@ -226,6 +489,17 @@ impl Memory {
 }
 
 fn update_loop(game: &Process, addresses: &Memory, watchers: &mut Watchers) {
+    const GAME_SCENE_CONTROLLER_TYPES: &[&str] = &[
+        "GameSceneController",
+        "BlackDragonBattleGameSceneController",
+        "BRMainGameSceneController",
+        "BROverallResultSceneController",
+        "EndingGameSceneController",
+        "MiniActGameSceneController",
+        "ShootingGameSceneController",
+        "WorldMapGameSceneController",
+    ];
+
     let current_scene_controller: Address = addresses
         .current_scene_controller
         .deref::<Address64>(game)
@@ -235,71 +509,217 @@ fn update_loop(game: &Process, addresses: &Memory, watchers: &mut Watchers) {
         .get_current_scene_controller_name::<128>(game, current_scene_controller)
         .unwrap_or_default();
 
-    watchers.start_trigger.update_infallible(
-        current_scene_controller_name.matches(b"SelectSaveSlotController")
-            && addresses
-                .next_scene_name
-                .deref::<[u16; 10]>(game)
-                .is_ok_and(|name| &name.map(|val| val as u8) == b"MovieScene"),
-    );
+    let is_game_scene = GAME_SCENE_CONTROLLER_TYPES
+        .iter()
+        .any(|val| current_scene_controller_name.matches(val));
 
-    watchers.level_id.update_infallible(
-        if current_scene_controller_name.matches(b"GameSceneController") {
-            game.read_pointer_path64(
-                current_scene_controller,
-                &[addresses.game_scene_controller_offsets.stage_info as _, 0],
-            )
+    let sys_save =
+        game.read::<Address64>(addresses.save_data.static_table + addresses.save_data.instance);
+    let current_slot = if let Ok(sys_save) = sys_save {
+        game.read::<u32>(sys_save + addresses.save_data.current_slot)
             .unwrap_or_default()
+    } else {
+        0
+    };
+
+    let save_slot = {
+        if let Ok(sys_save) = sys_save {
+            game.read_pointer_path64::<Address64>(
+                sys_save,
+                &[
+                    addresses.save_data.sys_save_data,
+                    addresses.save_data.save_datas,
+                    0x20 + current_slot.wrapping_mul(8) as u64,
+                ],
+            )
+            .ok()
         } else {
-            match &watchers.level_id.pair {
-                Some(x) => x.current,
-                _ => 0,
-            }
-        },
-    );
+            None
+        }
+    };
+
+    watchers.start_trigger.update_infallible(!{
+        if let Some(save_slot) = save_slot {
+            game.read::<bool>(save_slot + addresses.save_data.is_normal_first_play)
+                .unwrap_or_default()
+        } else {
+            false
+        }
+    });
+
+    watchers.start_trigger_trip.update_infallible(!{
+        if let Some(save_slot) = save_slot {
+            game.read::<bool>(save_slot + addresses.save_data.is_trip_first_play)
+                .unwrap_or_default()
+        } else {
+            false
+        }
+    });
+
+    watchers.level_id.update_infallible(if is_game_scene {
+        game.read_pointer_path64(
+            current_scene_controller,
+            &[addresses.game_scene_controller_offsets.stage_info as _, 0],
+        )
+        .unwrap_or_default()
+    } else {
+        match &watchers.level_id.pair {
+            Some(x) => x.current,
+            _ => 0,
+        }
+    });
 
     watchers
         .is_loading
         .update_infallible(addresses.is_loading.deref(game).unwrap_or_default());
 
-    watchers.goal_ring_flag.update_infallible(
-        if current_scene_controller_name.matches(b"GameSceneController") {
-            let is_time_attack = game.read::<bool>(
-                current_scene_controller
-                    + addresses.game_scene_controller_offsets.is_time_attack_mode,
-            );
-            if is_time_attack.is_ok_and(|val| val) {
-                false
-            } else {
-                game.read(
-                    current_scene_controller
-                        + addresses.game_scene_controller_offsets.is_result_sequence,
-                )
-                .is_ok_and(|val| val)
-            }
+    watchers.goal_ring_flag.update_infallible(if is_game_scene {
+        let is_time_attack = game.read::<bool>(
+            current_scene_controller + addresses.game_scene_controller_offsets.is_time_attack_mode,
+        );
+
+        if is_time_attack.is_ok_and(|val| val) {
+            false
         } else {
-            match &watchers.goal_ring_flag.pair {
+            game.read(
+                current_scene_controller
+                    + addresses.game_scene_controller_offsets.is_result_sequence,
+            )
+            .is_ok_and(|val| val)
+                || game
+                    .read(
+                        current_scene_controller
+                            + addresses.game_scene_controller_offsets.is_goal_sequence,
+                    )
+                    .is_ok_and(|val| val)
+        }
+    } else {
+        match &watchers.goal_ring_flag.pair {
+            Some(x) => x.current,
+            _ => false,
+        }
+    });
+
+    watchers
+        .game_mode
+        .update_infallible(addresses.game_mode.deref(game).unwrap_or_default());
+
+    watchers.black_dragon_defeated.update_infallible({
+        if current_scene_controller_name.matches("BlackDragonBattleGameSceneController") {
+            game.read::<u8>(
+                current_scene_controller + addresses.black_dragon_controller_offsets.seq,
+            )
+            .is_ok_and(|val| val == 8)
+        } else {
+            match &watchers.black_dragon_defeated.pair {
                 Some(x) => x.current,
                 _ => false,
             }
-        },
-    );
+        }
+    });
 }
 
 fn start(watchers: &Watchers, settings: &Settings) -> bool {
-    settings.start
+    (settings.start_story
         && watchers
             .start_trigger
             .pair
-            .is_some_and(|val| val.changed_to(&true))
+            .is_some_and(|val| val.changed_to(&true)))
+        || (settings.start_trip
+            && watchers
+                .start_trigger_trip
+                .pair
+                .is_some_and(|val| val.changed_to(&true)))
+        || (settings.start_last_story
+            && watchers
+                .game_mode
+                .pair
+                .is_some_and(|val| val.changed_to(&2)))
 }
 
 fn split(watchers: &Watchers, settings: &Settings) -> bool {
-    settings.split
-        && watchers
-            .goal_ring_flag
-            .pair
-            .is_some_and(|val| val.changed_to(&false))
+    let Some(game_mode) = &watchers.game_mode.pair else { return false };
+    let Some(level_id) = &watchers.level_id.pair else { return false };
+
+    let goal_ring = watchers
+        .goal_ring_flag
+        .pair
+        .is_some_and(|val| val.changed_to(&false));
+
+    match game_mode.current {
+        0 => {
+            goal_ring
+                && match level_id.old {
+                    10100 => settings.bridge_island_1,
+                    10200 => settings.bridge_island_2,
+                    600102 => settings.bridge_island_fruit,
+                    20100 => settings.speed_jungle_1,
+                    20200 => settings.speed_jungle_sonic,
+                    20300 => settings.speed_jungle_2,
+                    30100 => settings.sky_temple_1,
+                    40100 => settings.pinball_carnival_1,
+                    40200 => settings.pinball_carnival_2,
+                    600401 => settings.pinball_carnival_fruit,
+                    50100 => settings.lagoon_city_1,
+                    50200 => settings.lagoon_city_amy,
+                    50300 => settings.lagoon_city_2,
+                    60100 => settings.sand_sanctuary_1,
+                    70100 => settings.press_factory_1,
+                    70200 => settings.press_factory_2,
+                    600702 => settings.press_factory_fruit,
+                    80100 => settings.golden_capital_1,
+                    80200 => settings.golden_capital_knuckles,
+                    80300 => settings.golden_capital_2,
+                    90100 => settings.cyber_station_1,
+                    100100 => settings.frozen_base_1,
+                    100200 => settings.frozen_base_tails,
+                    100300 => settings.frozen_base_2,
+                    110100 => settings.egg_fortress_1,
+                    110200 => settings.egg_fortress_2,
+                    _ => false,
+                }
+        }
+        1 => {
+            goal_ring
+                && match level_id.old {
+                    10100 => settings.trip_bridge_island_1,
+                    10200 => settings.trip_bridge_island_2,
+                    600102 => settings.trip_bridge_island_fruit,
+                    20100 => settings.trip_speed_jungle_1,
+                    20200 => settings.trip_speed_jungle_2,
+                    20300 => settings.trip_speed_jungle_3,
+                    30100 => settings.trip_sky_temple_1,
+                    40100 => settings.trip_pinball_carnival_1,
+                    40200 => settings.trip_pinball_carnival_2,
+                    600401 => settings.trip_pinball_carnival_fruit,
+                    50100 => settings.trip_lagoon_city_1,
+                    50200 => settings.trip_lagoon_city_2,
+                    50300 => settings.trip_lagoon_city_3,
+                    60100 => settings.trip_sand_sanctuary_1,
+                    70100 => settings.trip_press_factory_1,
+                    70200 => settings.trip_press_factory_2,
+                    600702 => settings.trip_press_factory_fruit,
+                    80100 => settings.trip_golden_capital_1,
+                    80200 => settings.trip_golden_capital_2,
+                    80300 => settings.trip_golden_capital_3,
+                    90100 => settings.trip_cyber_station_1,
+                    100100 => settings.trip_frozen_base_1,
+                    100200 => settings.trip_frozen_base_2,
+                    100300 => settings.trip_frozen_base_3,
+                    110100 => settings.trip_egg_fortress_1,
+                    110200 => settings.trip_egg_fortress_2,
+                    _ => false,
+                }
+        }
+        2 => {
+            watchers
+                .black_dragon_defeated
+                .pair
+                .is_some_and(|val| val.changed_to(&true))
+                && settings.black_dragon
+        }
+        _ => false,
+    }
 }
 
 fn reset(_watchers: &Watchers, _settings: &Settings) -> bool {
