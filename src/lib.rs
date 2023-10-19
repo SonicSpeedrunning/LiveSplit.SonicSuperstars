@@ -279,7 +279,7 @@ struct Watchers {
     level_id: Watcher<u32>,
     is_loading: Watcher<bool>,
     goal_ring_flag: Watcher<bool>,
-    black_dragon_defeated: Watcher<bool>,
+    boss_defeated: Watcher<bool>,
 }
 
 struct Memory {
@@ -288,7 +288,7 @@ struct Memory {
     save_data: SysSaveDataStory,
     current_scene_controller: DeepPointer<2>,
     game_scene_controller_offsets: GameSceneControllerOffsets,
-    black_dragon_controller_offsets: BlackDragonBattleSceneControllerOffsets,
+    boss_controller_offsets: EnemySpecialBase,
 }
 
 struct SysSaveDataStory {
@@ -302,14 +302,15 @@ struct SysSaveDataStory {
 }
 
 struct GameSceneControllerOffsets {
-    stage_info: u32,
-    is_goal_sequence: u32,
-    is_result_sequence: u32,
-    is_time_attack_mode: u32,
+    stage_info: u64,
+    is_goal_sequence: u64,
+    is_result_sequence: u64,
+    is_time_attack_mode: u64,
+    active_boss_base: u64,
 }
 
-struct BlackDragonBattleSceneControllerOffsets {
-    seq: u64,
+struct EnemySpecialBase {
+    base_type: u64, // Becomes 3 when boss dies
 }
 
 impl Memory {
@@ -317,6 +318,12 @@ impl Memory {
         let il2cpp_module = Module::wait_attach(game, Version::V2020).await;
         let game_assembly = il2cpp_module.wait_get_default_image(game).await;
 
+        // The main class used for monitoring level progression
+        let scene_manager_class = game_assembly
+            .wait_get_class(game, &il2cpp_module, "Scene_Manager")
+            .await;
+
+        // We need to recover the current game mode in order to differentiate between story mode, trip story and final story
         let game_mode = {
             let sys_game_manager = game_assembly
                 .wait_get_class(game, &il2cpp_module, "SysGameManager")
@@ -338,19 +345,20 @@ impl Memory {
             DeepPointer::new_64bit(static_table, &[instance, game_mode])
         };
 
-        let scene_manager_class = game_assembly
-            .wait_get_class(game, &il2cpp_module, "Scene_Manager")
-            .await;
-        let scene_manager_static = scene_manager_class
-            .wait_get_static_table(game, &il2cpp_module)
-            .await;
-        let scene_manager_is_in_transition = scene_manager_class
-            .wait_get_field_offset(game, &il2cpp_module, "<IsTransitionPlay>k__BackingField")
-            .await as _;
+        // Self-explanatory. In reality this checks a static field inside the scene_manager class that tells us whenever we are in a transision.
+        // It's a good loading variable.
+        let is_loading = {
+            let scene_manager_static = scene_manager_class
+                .wait_get_static_table(game, &il2cpp_module)
+                .await;
+            let scene_manager_is_in_transition = scene_manager_class
+                .wait_get_field_offset(game, &il2cpp_module, "<IsTransitionPlay>k__BackingField")
+                .await as _;
+            DeepPointer::new_64bit(scene_manager_static, &[scene_manager_is_in_transition])
+        };
 
-        let is_loading =
-            DeepPointer::new_64bit(scene_manager_static, &[scene_manager_is_in_transition]);
-
+        // This is a bit of spaghetti code we use to recover the address of the current SceneController.
+        // Not that this links to an abstract class, so we need to check which class that inherits from it we are currently in.
         let current_scene_controller = {
             let scene_manager_parent = scene_manager_class
                 .wait_get_parent(game, &il2cpp_module)
@@ -380,6 +388,9 @@ impl Memory {
             )
         };
 
+        // Save data. This class contains stuff about story progression and unlocks.
+        // It also tells us if we are starting story mode / trip story the first time, making it a
+        // perfect variable for triggering the start of a run.
         let save_data = {
             let sys_save_manager = game_assembly
                 .wait_get_class(game, &il2cpp_module, "SysSaveManager")
@@ -428,10 +439,13 @@ impl Memory {
             }
         };
 
+        // The the SceneController is just an abstract class, we want to delve deeper into this
+        // "GameSceneControllerBase" class in order to recover the offsets we need.
         let game_scene_controller_offsets = {
             let game_scene_controller = game_assembly
                 .wait_get_class(game, &il2cpp_module, "GameSceneControllerBase")
                 .await;
+
             let game_scene_controller_stage_info = game_scene_controller
                 .wait_get_field_offset(game, &il2cpp_module, "stageInfo")
                 .await as _;
@@ -449,24 +463,38 @@ impl Memory {
                 .wait_get_field_offset(game, &il2cpp_module, "isTimeAttackMode")
                 .await as _;
 
+            let active_boss_base = game_scene_controller
+                .wait_get_field_offset(game, &il2cpp_module, "activeBossBase")
+                .await as _;
+
             GameSceneControllerOffsets {
                 stage_info: game_scene_controller_stage_info,
                 is_goal_sequence: game_scene_controller_is_goal_sequence,
                 is_result_sequence: game_scene_controller_is_result_sequence,
                 is_time_attack_mode: game_scene_controller_is_time_attack_mode,
+                active_boss_base,
             }
         };
 
-        let boss_black_dragon = {
-            let black_dragon_scene = game_assembly
-                .wait_get_class(game, &il2cpp_module, "BlackDragonBattleGameSceneController")
-                .await;
-            let seq = black_dragon_scene
-                .wait_get_field_offset(game, &il2cpp_module, "seq")
-                .await as _;
+        // This reports whenever a boss dies. Currently defined without looking for its class as it's not loaded in time for the start of a run
+        let boss_final = {
+            let base_type = 0x130;
 
-            BlackDragonBattleSceneControllerOffsets { seq }
+            /*
+            let class = game_assembly
+                .wait_get_class(game, &il2cpp_module, "EnemySpecialBase")
+                .await;
+
+
+            let base_type = class
+                .wait_get_field_offset(game, &il2cpp_module, "baseType")
+                .await as _;
+            */
+
+            EnemySpecialBase { base_type }
         };
+
+        asr::print_limited::<24>(&"  => Autosplitter ready!");
 
         Self {
             is_loading,
@@ -474,17 +502,8 @@ impl Memory {
             save_data,
             current_scene_controller,
             game_scene_controller_offsets,
-            black_dragon_controller_offsets: boss_black_dragon,
+            boss_controller_offsets: boss_final,
         }
-    }
-
-    fn get_current_scene_controller_name<const N: usize>(
-        &self,
-        game: &Process,
-        scene_controller_address: Address,
-    ) -> Option<ArrayCString<N>> {
-        game.read_pointer_path64(scene_controller_address, &[0, 0x10, 0])
-            .ok()
     }
 }
 
@@ -500,21 +519,27 @@ fn update_loop(game: &Process, addresses: &Memory, watchers: &mut Watchers) {
         "WorldMapGameSceneController",
     ];
 
+    const BOSSES_TYPES: &[&str] = &["Bos111", "Bos112"];
+
     let current_scene_controller: Address = addresses
         .current_scene_controller
         .deref::<Address64>(game)
         .unwrap_or_default()
         .into();
-    let current_scene_controller_name = addresses
-        .get_current_scene_controller_name::<128>(game, current_scene_controller)
+
+    let current_scene_controller_name = game
+        .read_pointer_path64::<ArrayCString<128>>(current_scene_controller, &[0, 0x10, 0])
         .unwrap_or_default();
 
+    // The main GameSceneController (and its inherited class) are the classes we're interested in for autosplitting purposes.
     let is_game_scene = GAME_SCENE_CONTROLLER_TYPES
         .iter()
         .any(|val| current_scene_controller_name.matches(val));
 
+    // Save data stuff we read from memory to determine if we're starting a new game
     let sys_save =
         game.read::<Address64>(addresses.save_data.static_table + addresses.save_data.instance);
+
     let current_slot = if let Ok(sys_save) = sys_save {
         game.read::<u32>(sys_save + addresses.save_data.current_slot)
             .unwrap_or_default()
@@ -559,7 +584,7 @@ fn update_loop(game: &Process, addresses: &Memory, watchers: &mut Watchers) {
     watchers.level_id.update_infallible(if is_game_scene {
         game.read_pointer_path64(
             current_scene_controller,
-            &[addresses.game_scene_controller_offsets.stage_info as _, 0],
+            &[addresses.game_scene_controller_offsets.stage_info, 0x10],
         )
         .unwrap_or_default()
     } else {
@@ -604,14 +629,29 @@ fn update_loop(game: &Process, addresses: &Memory, watchers: &mut Watchers) {
         .game_mode
         .update_infallible(addresses.game_mode.deref(game).unwrap_or_default());
 
-    watchers.black_dragon_defeated.update_infallible({
-        if current_scene_controller_name.matches("BlackDragonBattleGameSceneController") {
-            game.read::<u8>(
-                current_scene_controller + addresses.black_dragon_controller_offsets.seq,
+    watchers.boss_defeated.update_infallible({
+        if game
+            .read_pointer_path64::<ArrayCString<128>>(
+                current_scene_controller,
+                &[
+                    addresses.game_scene_controller_offsets.active_boss_base,
+                    0,
+                    0x10,
+                    0,
+                ],
             )
-            .is_ok_and(|val| val == 8)
+            .is_ok_and(|val| BOSSES_TYPES.iter().any(|v| val.matches(v)))
+        {
+            game.read_pointer_path64::<u8>(
+                current_scene_controller,
+                &[
+                    addresses.game_scene_controller_offsets.active_boss_base,
+                    addresses.boss_controller_offsets.base_type,
+                ],
+            )
+            .is_ok_and(|val| val == 3)
         } else {
-            match &watchers.black_dragon_defeated.pair {
+            match &watchers.boss_defeated.pair {
                 Some(x) => x.current,
                 _ => false,
             }
@@ -640,15 +680,26 @@ fn start(watchers: &Watchers, settings: &Settings) -> bool {
 fn split(watchers: &Watchers, settings: &Settings) -> bool {
     let Some(game_mode) = &watchers.game_mode.pair else { return false };
     let Some(level_id) = &watchers.level_id.pair else { return false };
+    let Some(goal_ring) = &watchers.goal_ring_flag.pair else { return false };
 
-    let goal_ring = watchers
-        .goal_ring_flag
-        .pair
-        .is_some_and(|val| val.changed_to(&false));
+    // Final boss
+    if level_id.old == 110200
+        && (watchers
+            .boss_defeated
+            .pair
+            .is_some_and(|val| val.changed_to(&true))
+            || goal_ring.changed_to(&true))
+    {
+        match game_mode.current {
+            0 => return settings.egg_fortress_2,
+            1 => return settings.trip_egg_fortress_2,
+            _ => (),
+        };
+    }
 
     match game_mode.current {
         0 => {
-            goal_ring
+            goal_ring.changed_to(&false)
                 && match level_id.old {
                     10100 => settings.bridge_island_1,
                     10200 => settings.bridge_island_2,
@@ -680,7 +731,7 @@ fn split(watchers: &Watchers, settings: &Settings) -> bool {
                 }
         }
         1 => {
-            goal_ring
+            goal_ring.changed_to(&false)
                 && match level_id.old {
                     10100 => settings.trip_bridge_island_1,
                     10200 => settings.trip_bridge_island_2,
@@ -713,7 +764,7 @@ fn split(watchers: &Watchers, settings: &Settings) -> bool {
         }
         2 => {
             watchers
-                .black_dragon_defeated
+                .boss_defeated
                 .pair
                 .is_some_and(|val| val.changed_to(&true))
                 && settings.black_dragon
