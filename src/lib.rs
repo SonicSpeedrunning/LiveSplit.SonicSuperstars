@@ -13,6 +13,7 @@ use asr::{
     deep_pointer::DeepPointer,
     future::{next_tick, retry},
     game_engine::unity::il2cpp::{Module, Version},
+    settings::Gui,
     string::ArrayCString,
     time::Duration,
     timer::{self, TimerState},
@@ -26,7 +27,7 @@ asr::async_main!(nightly);
 const PROCESS_NAMES: &[&str] = &["SonicSuperstars.exe"];
 
 async fn main() {
-    let settings = Settings::register();
+    let mut settings = Settings::register();
 
     loop {
         // Hook to the target process
@@ -47,6 +48,7 @@ async fn main() {
                     // 2. If the timer is currently either running or paused, then the isLoading, gameTime, and reset actions will be run.
                     // 3. If reset does not return true, then the split action will be run.
                     // 4. If the timer is currently not running (and not paused), then the start action will be run.
+                    settings.update();
                     update_loop(&process, &memory, &mut watchers);
 
                     let timer_state = timer::state();
@@ -90,7 +92,7 @@ async fn main() {
     }
 }
 
-#[derive(asr::user_settings::Settings)]
+#[derive(Gui)]
 struct Settings {
     #[default = true]
     /// => AUTO START: Enable auto start (Story Mode)
@@ -678,9 +680,15 @@ fn start(watchers: &Watchers, settings: &Settings) -> bool {
 }
 
 fn split(watchers: &Watchers, settings: &Settings) -> bool {
-    let Some(game_mode) = &watchers.game_mode.pair else { return false };
-    let Some(level_id) = &watchers.level_id.pair else { return false };
-    let Some(goal_ring) = &watchers.goal_ring_flag.pair else { return false };
+    let Some(game_mode) = &watchers.game_mode.pair else {
+        return false;
+    };
+    let Some(level_id) = &watchers.level_id.pair else {
+        return false;
+    };
+    let Some(goal_ring) = &watchers.goal_ring_flag.pair else {
+        return false;
+    };
 
     // Final boss
     if level_id.old == 110200
